@@ -1,3 +1,25 @@
+"""
+The `TodoItem` class represents a to-do item with a title, description, category, and completion status.
+
+The `create_connection()` function creates a connection to a SQLite database named "todo.db".
+
+The `create_table(conn)` function creates a table named "todo_items" in the database if it doesn't already exist. The table has columns for the title, description, category, and completion status of each to-do item.
+
+The `add_todo_item(conn, title, description, category)` function adds a new to-do item to the database. If the title is empty, it prints an error message.
+
+The `get_user_input()` function prompts the user to enter the title, description, and category of a new to-do item.
+
+The `add_todo_item_from_user_input(conn)` function calls `get_user_input()` and then adds the new to-do item to the database using `add_todo_item()`.
+
+The `view_todo_items(conn)` function provides a menu-driven interface for viewing and managing to-do items, including options to view all items, view uncategorized items, view items by category, and remove items.
+
+The `view_all_todo_items(conn)`, `view_uncategorized_todo_items(conn)`, and `view_todo_items_by_category(conn)` functions retrieve and display to-do items from the database based on the selected options.
+
+The `remove_todo_item(conn)` function prompts the user to enter the title of a to-do item to remove, and then deletes the item from the database if it exists.
+
+The `main()` function creates a database connection, creates the "todo_items" table if it doesn't exist, and then enters a loop that allows the user to add new to-do items, view and manage existing to-do items, or quit the application.
+"""
+
 import sqlite3
 
 
