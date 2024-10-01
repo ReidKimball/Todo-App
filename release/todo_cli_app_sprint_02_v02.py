@@ -16,15 +16,29 @@ import sqlite3
 
 #
 class TodoItem:
-    def __init__(self, title, description, category, completed=False):
+    def __init__(
+        self,
+        title,
+        description,
+        category,
+        completed=False,
+        start_date=None,
+        start_time=None,
+        end_date=None,
+        end_time=None,
+    ):
         self.title = title
         self.description = description
         self.category = category
         self.completed = completed
+        self.start_date = start_date
+        self.start_time = start_time
+        self.end_date = end_date
+        self.end_time = end_time
 
 
 def create_connection():
-    conn = sqlite3.connect("todo.db")
+    conn = sqlite3.connect("data/todo.db")
     return conn
 
 
@@ -40,12 +54,17 @@ def create_table(conn):
     conn.commit()
 
 
-def add_todo_item(conn, title, description, category):
-    if title:
+def add_todo_item(conn, todo_item):
+    if todo_item.title:
         c = conn.cursor()
         c.execute(
             "INSERT INTO todo_items (title, description, category, completed) VALUES (?, ?, ?, ?)",
-            (title, description, category, 0),
+            (
+                todo_item.title,
+                todo_item.description,
+                todo_item.category,
+                int(todo_item.completed),
+            ),
         )
         conn.commit()
         print("To-do item added successfully.")
@@ -64,7 +83,8 @@ def get_user_input():
 
 def add_todo_item_from_user_input(conn):
     title, description, category = get_user_input()
-    add_todo_item(conn, title, description, category)
+    todo_item = TodoItem(title, description, category)
+    add_todo_item(conn, todo_item)
 
 
 def view_and_manage_todo_items(conn):
@@ -102,12 +122,12 @@ def view_and_manage_todo_items(conn):
 def view_all_todo_items(conn):
     c = conn.cursor()
     c.execute("SELECT * FROM todo_items")
-    todo_items = c.fetchall()
+    todo_items = [TodoItem(*item) for item in c.fetchall()]
 
     if todo_items:
         print("\nAll to-do items:")
         for i, item in enumerate(todo_items):
-            print(f"{i+1}. {item[0]} - {item[1]} ({item[2]})")
+            print(f"{i+1}. {item.title} - {item.description} ({item.category})")
     else:
         print("No to-do items found.")
 
@@ -123,24 +143,6 @@ def view_uncategorized_todo_items(conn):
             print(f"{i+1}. {item[0]} - {item[1]}")
     else:
         print("No uncategorized to-do items found.")
-
-
-"""
-def view_todo_items_by_category(conn):
-    category = input(
-        "Enter the category (urgent, schedule, delegate, automate, eliminate): "
-    )
-    c = conn.cursor()
-    c.execute("SELECT * FROM todo_items WHERE category = ?", (category,))
-    todo_items = c.fetchall()
-
-    if todo_items:
-        print(f"\nTo-do items in category '{category}':")
-        for i, item in enumerate(todo_items):
-            print(f"{i+1}. {item[0]} - {item[1]}")
-    else:
-        print(f"No to-do items found in category '{category}'.")
-"""
 
 
 def view_todo_items_by_category(conn):
@@ -245,7 +247,6 @@ def schedule_todo_item(conn, item_title):
     start_time = input(
         f"What time would you like to start on {item_title}? (hh:mm AM/PM format): "
     )
-
     end_date = input(
         f"What day would you like to complete {item_title}? (YYMMDD format): "
     )
@@ -253,31 +254,34 @@ def schedule_todo_item(conn, item_title):
         f"What time would you like to complete {item_title}? (hh:mm AM/PM format): "
     )
 
-    print("\nEntered information:")
-    print(f"Item: {item_title}")
-    print(f"Start: {start_date} at {start_time}")
-    print(f"Complete: {end_date} at {end_time}")
-
-    # Update the database with the scheduling information
     c = conn.cursor()
-    c.execute(
-        """UPDATE todo_items
-                 SET start_date = ?, start_time = ?, end_date = ?, end_time = ?
-                 WHERE title = ?""",
-        (start_date, start_time, end_date, end_time, item_title),
-    )
-    conn.commit()
+    c.execute("SELECT * FROM todo_items WHERE title = ?", (item_title,))
+    item_data = c.fetchone()
 
-    print("Schedule information updated successfully.")
+    if item_data:
+        todo_item = TodoItem(*item_data)
+        todo_item.start_date = start_date
+        todo_item.start_time = start_time
+        todo_item.end_date = end_date
+        todo_item.end_time = end_time
 
-    while True:
-        choice = input(
-            "\nPress 1 to go back to the main menu or any other key to continue: "
+        c.execute(
+            """UPDATE todo_items
+                     SET start_date = ?, start_time = ?, end_date = ?, end_time = ?
+                     WHERE title = ?""",
+            (
+                todo_item.start_date,
+                todo_item.start_time,
+                todo_item.end_date,
+                todo_item.end_time,
+                todo_item.title,
+            ),
         )
-        if choice == "1":
-            return
-        else:
-            break
+        conn.commit()
+
+        print("Schedule information updated successfully.")
+    else:
+        print(f"No to-do item found with title '{item_title}'.")
 
 
 def focus_todo_item(conn):

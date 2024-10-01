@@ -3,3 +3,5 @@ build/
 dist/
 JSON/
 UI Mockups/
+/src
+/data
