@@ -1,0 +1,5 @@
+.venv/
+build/
+dist/
+JSON/
+UI Mockups/
